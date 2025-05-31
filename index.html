@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LCPC Real-time Scoreboard</title>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+      import {
+        getFirestore,
+        doc,
+        setDoc,
+        onSnapshot,
+      } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBDppAH3O61-lEe29uVfTiUf5DP7JQ2E4c",
+        authDomain: "lcpcscoreboard.firebaseapp.com",
+        projectId: "lcpcscoreboard",
+        storageBucket: "lcpcscoreboard.firebasestorage.app",
+        messagingSenderId: "611271645221",
+        appId: "1:611271645221:web:d543de66736f8d152d07cc",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      const teams = ["Team Alpha", "Team Beta", "Team Gamma"];
+      const passwords = {
+        "Team Alpha": "alpha123",
+        "Team Beta": "beta123",
+        "Team Gamma": "gamma123",
+      };
+
+      const problems = ["A", "B", "C", "D", "E", "F"];
+      const colors = ["red", "green", "blue", "orange", "purple", "gold"];
+
+      document.getElementById("loginBtn").addEventListener("click", () => {
+        const team = document.getElementById("teamSelect").value;
+        const pass = document.getElementById("teamPassword").value;
+        if (passwords[team] === pass) {
+          document.getElementById("login").style.display = "none";
+          document.getElementById("scoreboard").style.display = "block";
+          renderTeam(team);
+        } else {
+          alert("Incorrect password. Please try again.");
+        }
+      });
+
+      function renderTeam(teamName) {
+        const container = document.getElementById("teams");
+        const teamIndex = teams.indexOf(teamName);
+        const teamDiv = document.createElement("div");
+        teamDiv.className = "team";
+
+        const title = document.createElement("h2");
+        title.textContent = teamName;
+        teamDiv.appendChild(title);
+
+        const problemsDiv = document.createElement("div");
+        problemsDiv.className = "problems";
+
+        problems.forEach((label, i) => {
+          const probDiv = document.createElement("div");
+          probDiv.className = "problem";
+
+          const balloon = document.createElement("div");
+          balloon.className = `balloon ${colors[i]}`;
+          probDiv.appendChild(balloon);
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = `${teamIndex}-${i}`;
+
+          const timestamp = document.createElement("div");
+          timestamp.className = "timestamp";
+          timestamp.id = `time-${teamIndex}-${i}`;
+
+          checkbox.addEventListener("change", async () => {
+            const path = `teams/${teamName.replace(/\s/g, "")}`;
+            const now = new Date();
+            const time = now.toLocaleTimeString("en-US", { hour12: false });
+            const value = checkbox.checked ? time : null;
+
+            await setDoc(
+              doc(db, path),
+              {
+                [label]: value,
+              },
+              { merge: true }
+            );
+          });
+
+          probDiv.appendChild(checkbox);
+          probDiv.appendChild(timestamp);
+          problemsDiv.appendChild(probDiv);
+        });
+
+        teamDiv.appendChild(problemsDiv);
+        container.appendChild(teamDiv);
+
+        const path = `teams/${teamName.replace(/\s/g, "")}`;
+        onSnapshot(doc(db, path), (docSnap) => {
+          const data = docSnap.data();
+          if (data) {
+            problems.forEach((label, i) => {
+              const cb = document.getElementById(`${teamIndex}-${i}`);
+              const ts = document.getElementById(`time-${teamIndex}-${i}`);
+              if (data[label]) {
+                cb.checked = true;
+                ts.textContent = data[label];
+              } else {
+                cb.checked = false;
+                ts.textContent = "";
+              }
+            });
+          }
+        });
+      }
+    </script>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #f4f4f4;
+        padding: 20px;
+      }
+      .team {
+        background: #fff;
+        padding: 10px 15px;
+        margin-bottom: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .problems {
+        display: flex;
+        gap: 15px;
+      }
+      .problem {
+        text-align: center;
+      }
+      .balloon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-bottom: 5px;
+      }
+      .red {
+        background: red;
+      }
+      .green {
+        background: green;
+      }
+      .blue {
+        background: blue;
+      }
+      .orange {
+        background: orange;
+      }
+      .purple {
+        background: purple;
+      }
+      .gold {
+        background: gold;
+      }
+      .timestamp {
+        font-size: 12px;
+        color: gray;
+        margin-top: 5px;
+      }
+      #login {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        width: 300px;
+        margin: auto;
+      }
+      #login input,
+      #login select {
+        width: 100%;
+        padding: 8px;
+        margin: 8px 0;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+      #login button {
+        width: 100%;
+        padding: 10px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      #scoreboard {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="login">
+      <h2>Team Login</h2>
+      <select id="teamSelect">
+        <option value="Team Alpha">Team Alpha</option>
+        <option value="Team Beta">Team Beta</option>
+        <option value="Team Gamma">Team Gamma</option>
+      </select>
+      <input
+        type="password"
+        id="teamPassword"
+        placeholder="Enter Team Password"
+      />
+      <button id="loginBtn">Login</button>
+    </div>
+
+    <div id="scoreboard">
+      <h1>LCPC Real-Time Scoreboard</h1>
+      <div id="teams"></div>
+    </div>
+  </body>
+</html>
