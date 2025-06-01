@@ -8,8 +8,9 @@
       import {
         getFirestore,
         doc,
+        getDoc,
         setDoc,
-        onSnapshot,
+        onSnapshot
       } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -18,26 +19,24 @@
         projectId: "lcpcscoreboard",
         storageBucket: "lcpcscoreboard.firebasestorage.app",
         messagingSenderId: "611271645221",
-        appId: "1:611271645221:web:d543de66736f8d152d07cc",
+        appId: "1:611271645221:web:d543de66736f8d152d07cc"
       };
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
-      const teams = ["Team Alpha", "Team Beta", "Team Gamma"];
-      const passwords = {
-        "Team Alpha": "alpha123",
-        "Team Beta": "beta123",
-        "Team Gamma": "gamma123",
-      };
-
-      const problems = ["A", "B", "C", "D", "E", "F"];
+      const teams = ["MMT Team", "White Box Unit Team", "async team"];
+      const problems = ["1", "2", "3", "4", "5", "6"];
       const colors = ["red", "green", "blue", "orange", "purple", "gold"];
 
-      document.getElementById("loginBtn").addEventListener("click", () => {
+      document.getElementById("loginBtn").addEventListener("click", async () => {
         const team = document.getElementById("teamSelect").value;
         const pass = document.getElementById("teamPassword").value;
-        if (passwords[team] === pass) {
+
+        const accessRef = doc(db, "access", team);
+        const accessSnap = await getDoc(accessRef);
+
+        if (accessSnap.exists() && accessSnap.data().password === pass) {
           document.getElementById("login").style.display = "none";
           document.getElementById("scoreboard").style.display = "block";
           renderTeam(team);
@@ -63,6 +62,12 @@
           const probDiv = document.createElement("div");
           probDiv.className = "problem";
 
+          const labelTag = document.createElement("div");
+          labelTag.textContent = `Problem ${label}`;
+          labelTag.style.fontWeight = "bold";
+          labelTag.style.marginBottom = "4px";
+          probDiv.appendChild(labelTag);
+
           const balloon = document.createElement("div");
           balloon.className = `balloon ${colors[i]}`;
           probDiv.appendChild(balloon);
@@ -84,7 +89,7 @@
             await setDoc(
               doc(db, path),
               {
-                [label]: value,
+                [label]: value
               },
               { merge: true }
             );
@@ -143,24 +148,12 @@
         border-radius: 50%;
         margin-bottom: 5px;
       }
-      .red {
-        background: red;
-      }
-      .green {
-        background: green;
-      }
-      .blue {
-        background: blue;
-      }
-      .orange {
-        background: orange;
-      }
-      .purple {
-        background: purple;
-      }
-      .gold {
-        background: gold;
-      }
+      .red { background: red; }
+      .green { background: green; }
+      .blue { background: blue; }
+      .orange { background: orange; }
+      .purple { background: purple; }
+      .gold { background: gold; }
       .timestamp {
         font-size: 12px;
         color: gray;
@@ -174,8 +167,7 @@
         width: 300px;
         margin: auto;
       }
-      #login input,
-      #login select {
+      #login input, #login select {
         width: 100%;
         padding: 8px;
         margin: 8px 0;
@@ -200,15 +192,11 @@
     <div id="login">
       <h2>Team Login</h2>
       <select id="teamSelect">
-        <option value="Team Alpha">Team Alpha</option>
-        <option value="Team Beta">Team Beta</option>
-        <option value="Team Gamma">Team Gamma</option>
+        <option value="MMT Team">MMT Team</option>
+        <option value="White Box Unit Team">White Box Unit Team</option>
+        <option value="async team">async team</option>
       </select>
-      <input
-        type="password"
-        id="teamPassword"
-        placeholder="Enter Team Password"
-      />
+      <input type="password" id="teamPassword" placeholder="Enter Team Password" />
       <button id="loginBtn">Login</button>
     </div>
 
